@@ -1,0 +1,182 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String         @id @default(uuid())
+  name            String
+  email           String         @unique
+  password        String
+  phone           String?
+  role            String         @default("CUSTOMER") // CUSTOMER or ADMIN
+  isEmailVerified Boolean        @default(false)
+  avatar          String?
+  addresses       Address[]
+  orders          Order[]
+  reviews         Review[]
+  wishlist        Wishlist[]
+  notifications   Notification[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Address {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName     String
+  phone        String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  pincode      String
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  slug      String    @unique
+  name      String
+  image     String
+  icon      String?
+  isVisible Boolean   @default(true)
+  sortOrder Int       @default(0)
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+model Product {
+  id           String         @id @default(uuid())
+  name         String
+  slug         String         @unique
+  categoryId   String
+  category     Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  price        Float
+  oldPrice     Float?
+  discount     Float          @default(0)
+  stock        Int            @default(10)
+  isFeatured   Boolean        @default(false)
+  isTrending   Boolean        @default(false)
+  isBestSeller Boolean        @default(false)
+  images       String         // Stored as JSON string array
+  tag          String?
+  description  String
+  specs        String         // Stored as JSON string array
+  rating       Float          @default(4.8)
+  reviewsCount Int            @default(0)
+  reviews      Review[]
+  orderItems   OrderItem[]
+  wishlist     Wishlist[]
+  inventory    InventoryLog[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Coupon {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  type        String   // PERCENTAGE or FLAT
+  value       Float
+  minPurchase Float    @default(0)
+  maxDiscount Float?
+  expiryDate  DateTime
+  usageLimit  Int      @default(100)
+  usedCount   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model Order {
+  id                String      @id @default(uuid())
+  orderNumber       String      @unique
+  userId            String?
+  user              User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customerName      String
+  customerPhone     String
+  customerEmail     String
+  shippingAddress   String      // Stored as JSON object string
+  paymentMethod     String      // WHATSAPP, RAZORPAY, COD, UPI
+  paymentStatus     String      @default("PENDING") // PENDING, PAID, FAILED
+  orderStatus       String      @default("PENDING") // PENDING, CONFIRMED, PACKED, SHIPPED, DELIVERED, CANCELLED
+  subtotal          Float
+  discountAmount    Float       @default(0)
+  shippingFee       Float       @default(0)
+  totalAmount       Float
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  items             OrderItem[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+model OrderItem {
+  id          String  @id @default(uuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  productName String
+  image       String
+  price       Float
+  quantity    Int
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating     Int
+  comment    String
+  isApproved Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model InventoryLog {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type      String   // IN, OUT, ADJUSTMENT
+  quantity  Int
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model Banner {
+  id        String   @id @default(uuid())
+  title     String
+  image     String
+  link      String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // ORDER, PROMO, SYSTEM
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
