@@ -58,10 +58,18 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4">
-      <div className="max-w-md text-center">
+      <div className="max-w-xl text-center">
         <h1 className="font-display text-5xl font-extrabold text-primary">500</h1>
         <h2 className="mt-4 text-xl font-bold">Something went wrong</h2>
         <p className="mt-2 text-sm text-muted-foreground">Try refreshing the page or head back to the store.</p>
+        
+        {error?.message && (
+          <div className="mt-6 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-left font-mono text-xs text-destructive overflow-x-auto max-h-48">
+            <p className="font-bold uppercase tracking-wider text-[10px]">Technical Exception Info:</p>
+            <p className="mt-1 font-semibold">{error.message}</p>
+          </div>
+        )}
+
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <button
             onClick={() => {

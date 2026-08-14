@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import {
@@ -334,10 +334,15 @@ function AdminDashboardPage() {
 
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const salesMap: Record<string, number> = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
-  ordersList.forEach((o) => {
-    const dayName = new Date(o.createdAt || Date.now()).toLocaleDateString("en-US", { weekday: "short" });
-    if (salesMap[dayName] !== undefined) {
-      salesMap[dayName] += o.totalAmount || 0;
+  (ordersList || []).forEach((o) => {
+    if (!o) return;
+    try {
+      const dayName = new Date(o.createdAt || Date.now()).toLocaleDateString("en-US", { weekday: "short" });
+      if (salesMap[dayName] !== undefined) {
+        salesMap[dayName] += Number(o.totalAmount || 0);
+      }
+    } catch {
+      // Ignore invalid date
     }
   });
   const salesData = days.map((day) => ({ day, sales: salesMap[day] || 0 }));
@@ -773,7 +778,7 @@ function AdminDashboardPage() {
                   .map((p) => (
                     <tr key={p.id} className="hover:bg-secondary/20">
                       <td className="p-4 font-bold flex items-center gap-3">
-                        <Link to="/product/$id" params={{ id: p.id }} target="_blank" className="flex items-center gap-3 group">
+                        <Link to="/product/$id" params={{ id: String(p?.id || "1") }} target="_blank" className="flex items-center gap-3 group">
                           <img src={p.image || p.images?.[0]} alt={p.name} className="size-12 rounded-xl object-cover border border-border bg-secondary group-hover:scale-105 transition-transform" />
                           <div>
                             <p className="font-bold text-sm group-hover:text-primary group-hover:underline">{p.name}</p>
