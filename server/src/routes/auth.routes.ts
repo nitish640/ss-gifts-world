@@ -145,7 +145,7 @@ router.post("/send-otp", async (req, res) => {
       return res.status(400).json({ error: "Email and code are required." });
     }
 
-    const apiKey = process.env.RESEND_API_KEY || "re_JjXihM2Z_PaK4HvKeJ5yeniYXdn3jCJZu";
+    const apiKey = process.env.RESEND_API_KEY || "";
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",

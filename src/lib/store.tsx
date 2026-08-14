@@ -71,9 +71,17 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const cartItems = useMemo(
     () =>
       cart
-        .map((l) => ({ product: products.find((p) => p.id === l.id)!, qty: l.qty }))
-        .filter((l) => Boolean(l.product)),
+        .map((l) => {
+          const p = products.find((prod) => prod.id === l.id);
+          return p ? { product: p, qty: l.qty } : null;
+        })
+        .filter((l): l is { product: Product; qty: number } => l !== null),
     [cart],
+  );
+
+  const subtotal = useMemo(
+    () => cartItems.reduce((s, l) => s + (l.product?.price || 0) * l.qty, 0),
+    [cartItems],
   );
 
   const value: ShopState = {
@@ -85,7 +93,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     clear,
     toggleWish,
     cartCount: cart.reduce((s, l) => s + l.qty, 0),
-    subtotal: cartItems.reduce((s, l) => s + l.product.price * l.qty, 0),
+    subtotal,
     cartItems,
   };
 

@@ -16,6 +16,10 @@ export type Product = {
   rating: number;
   reviews: number;
   image: string;
+  images?: string[];
+  colors?: { name: string; hex: string }[];
+  sizes?: string[];
+  ageGroup?: "baby" | "kids" | "teens" | "all";
   tag?: string;
   isCustomisable?: boolean;
   description: string;
@@ -301,12 +305,82 @@ const baseProducts = [
   },
 ];
 
-export const products: Product[] = baseProducts.map((p, i) => ({
-  id: `ssg-${i + 1}`,
-  ...p,
-  rating: Number((4.3 + ((i * 7) % 7) / 10).toFixed(1)),
-  reviews: 48 + ((i * 37) % 260),
-}));
+export const products: Product[] = baseProducts.map((p, i) => {
+  // Category specific default color options
+  const defaultColors =
+    p.category === "mug-printing"
+      ? [
+          { name: "Classic White", hex: "#ffffff" },
+          { name: "Thermochromic Black", hex: "#18181b" },
+          { name: "Ruby Red", hex: "#ef4444" },
+          { name: "Royal Blue", hex: "#2563eb" },
+        ]
+      : p.category === "photo-frames"
+      ? [
+          { name: "Matte Black Wood", hex: "#18181b" },
+          { name: "Natural Beechwood", hex: "#d97706" },
+          { name: "Royal Walnut", hex: "#78350f" },
+          { name: "Imperial Gold", hex: "#eab308" },
+        ]
+      : p.category === "soft-toys"
+      ? [
+          { name: "Classic Honey Brown", hex: "#b45309" },
+          { name: "Blush Pink", hex: "#f472b6" },
+          { name: "Snow White", hex: "#f8fafc" },
+        ]
+      : p.category === "toys"
+      ? [
+          { name: "Canary Yellow", hex: "#eab308" },
+          { name: "Racing Red", hex: "#dc2626" },
+          { name: "Matte Midnight Black", hex: "#18181b" },
+          { name: "Army Olive Green", hex: "#15803d" },
+        ]
+      : p.category === "customized"
+      ? [
+          { name: "Royal Velvet Red", hex: "#dc2626" },
+          { name: "Soft Satin Cream", hex: "#fef3c7" },
+          { name: "Midnight Navy", hex: "#1e3a8a" },
+        ]
+      : undefined;
+
+  // Category specific default size options
+  const defaultSizes =
+    p.category === "photo-frames"
+      ? ['6" x 8" (Tabletop)', '8" x 12" (Medium Wall)', '12" x 18" (Large Wall)', '16" x 24" (Grand Gallery)']
+      : p.category === "soft-toys"
+      ? ['1.2 Feet (35cm)', '2 Feet (60cm)', '3 Feet (90cm Jumbo)']
+      : p.category === "customized"
+      ? ['12" x 12" Standard', '15" x 15" Plush Square', 'Heart Cushion Edition']
+      : p.category === "toys"
+      ? ['Standard 1:32 Scale', 'Pro RC Remote Control Edition']
+      : p.category === "mug-printing"
+      ? ['325 ml Standard', '450 ml Jumbo Mug']
+      : undefined;
+
+  // Default Age Group classification for kids & toys filtering
+  const defaultAgeGroup: "baby" | "kids" | "teens" | "all" =
+    p.category === "soft-toys"
+      ? "baby"
+      : p.category === "toys"
+      ? p.name.includes("Jeep") || p.name.includes("Rubik")
+        ? "kids"
+        : "teens"
+      : "all";
+
+  // Multiple product images for interactive image thumbnail gallery
+  const imageGallery = [p.image, custom, birthday, frame].filter((img, idx, arr) => arr.indexOf(img) === idx);
+
+  return {
+    id: `ssg-${i + 1}`,
+    ...p,
+    images: p.images || imageGallery,
+    colors: p.colors || defaultColors,
+    sizes: p.sizes || defaultSizes,
+    ageGroup: p.ageGroup || defaultAgeGroup,
+    rating: Number((4.3 + ((i * 7) % 7) / 10).toFixed(1)),
+    reviews: 48 + ((i * 37) % 260),
+  };
+});
 
 export const getProduct = (id: string) => products.find((p) => p.id === id);
 

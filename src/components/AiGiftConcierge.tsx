@@ -4,7 +4,7 @@ import { Sparkles, Bot, X, CheckCircle2, ArrowRight, RefreshCw, ShoppingBag, Mes
 import { products, inr, type Product } from "@/data/catalog";
 import { useShop } from "@/lib/store";
 import { useAuth } from "@/lib/auth-store";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 export function AiGiftConcierge() {
@@ -57,7 +57,7 @@ export function AiGiftConcierge() {
       filtered = filtered.filter((p) => p.price >= 1000);
     }
 
-    const matched = filtered.length >= 2 ? filtered.slice(0, 3) : products.slice(0, 3);
+    const matched = filtered.length >= 2 ? filtered.slice(0, 6) : products.slice(0, 6);
 
     let rationale = "Curated based on occasion and budget preferences";
     if (occasion === "marriage") rationale = `Top recommended wedding gifts for ${relation || "the couple"}`;
@@ -74,10 +74,11 @@ export function AiGiftConcierge() {
     setLoadingAi(true);
     setAiInsight("");
     try {
+      const apiKey = import.meta.env.VITE_GROQ_API_KEY || (typeof process !== "undefined" ? process.env.GROQ_API_KEY : "");
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer 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`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -145,7 +146,7 @@ export function AiGiftConcierge() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-border bg-card shadow-lift p-6 md:p-8"
+              className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-border bg-card shadow-lift p-6 md:p-8 max-h-[85vh] flex flex-col"
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-border pb-4">
@@ -248,7 +249,25 @@ export function AiGiftConcierge() {
                       </button>
                     ))}
 
-                    {(occasion === "housewarming" || occasion === "kids") && [
+                    {occasion === "kids" && [
+                      { id: "my_child", label: "👶 My Own Child (Son / Daughter)" },
+                      { id: "nephew_niece", label: "🧒 Nephew / Niece / Grandchild" },
+                      { id: "friends_kid", label: "🎁 Friend's Kid / Relative's Child" },
+                      { id: "birthday_kid", label: "🎂 Birthday Boy / Birthday Girl" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        onClick={() => {
+                          setRelation(opt.label);
+                          setStep(3);
+                        }}
+                        className="rounded-2xl border border-border p-3 text-xs font-bold text-left hover:bg-secondary hover:border-primary transition-all"
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+
+                    {occasion === "housewarming" && [
                       { id: "rel_1", label: "Close Family Member" },
                       { id: "rel_2", label: "Friend or Colleague" },
                       { id: "rel_3", label: "Neighbor / Special Guest" },
@@ -309,7 +328,7 @@ export function AiGiftConcierge() {
 
               {/* STEP 4: AI CURATED RECOMMENDATIONS */}
               {step === 4 && (
-                <div className="mt-6 space-y-4">
+                <div className="mt-4 space-y-4 flex-1 overflow-y-auto pr-1">
                   <div className="rounded-2xl bg-primary/10 p-3.5 text-center space-y-1">
                     <span className="text-[11px] font-extrabold text-primary uppercase tracking-wider flex items-center justify-center gap-1">
                       <Sparkles className="size-3" /> Groq AI Llama-3 Recommendation
@@ -319,20 +338,28 @@ export function AiGiftConcierge() {
                     </p>
                   </div>
 
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                  <div className="space-y-3 max-h-[310px] overflow-y-auto pr-1">
                     {matched.map((p) => (
-                      <div key={p.id} className="flex items-center gap-3 rounded-2xl border border-border bg-background p-3 shadow-soft">
-                        <img src={p.image} alt={p.name} className="size-16 rounded-xl object-cover border border-border bg-secondary shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <span className="inline-block rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold text-emerald-600">
-                            98% Match
-                          </span>
-                          <p className="truncate font-bold text-xs mt-0.5">{p.name}</p>
-                          <p className="text-xs font-extrabold text-primary">{inr(p.price)}</p>
-                        </div>
+                      <div key={p.id} className="flex items-center gap-3 rounded-2xl border border-border bg-background p-3 shadow-soft hover:border-primary/50 transition-colors">
+                        <Link
+                          to="/product/$id"
+                          params={{ id: p.id }}
+                          target="_blank"
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center gap-3 flex-1 min-w-0 group cursor-pointer"
+                        >
+                          <img src={p.image} alt={p.name} className="size-16 rounded-xl object-cover border border-border bg-secondary shrink-0 group-hover:scale-105 transition-transform" />
+                          <div className="flex-1 min-w-0">
+                            <span className="inline-block rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold text-emerald-600">
+                              98% Match
+                            </span>
+                            <p className="truncate font-bold text-xs mt-0.5 group-hover:text-primary group-hover:underline">{p.name}</p>
+                            <p className="text-xs font-extrabold text-primary">{inr(p.price)}</p>
+                          </div>
+                        </Link>
                         <button
                           onClick={() => handleAddToCart(p.id)}
-                          className="rounded-full bg-primary px-3 py-2 text-[11px] font-bold text-primary-foreground shadow-glow shrink-0"
+                          className="rounded-full bg-primary px-3 py-2 text-[11px] font-bold text-primary-foreground shadow-glow shrink-0 hover:scale-105 transition-transform"
                         >
                           + Bag
                         </button>

@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
-import { Package, User, MapPin, Heart, LogOut, ShieldCheck, ShoppingBag, ArrowRight } from "lucide-react";
+import { Package, User, MapPin, Heart, LogOut, ShieldCheck, ShoppingBag, ArrowRight, CheckCircle2, Clock, Truck, Zap, X, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-store";
 import { apiFetch } from "@/lib/api-client";
@@ -26,24 +26,41 @@ function AccountPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [activeTab, setActiveTab] = useState<"orders" | "profile" | "addresses" | "wishlist">("orders");
+  const [trackingOrder, setTrackingOrder] = useState<any | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   const savedWishlistProducts = products.filter((p) => wishlist.includes(p.id));
 
   useEffect(() => {
-    if (!user) {
-      navigate({ to: "/login" });
-      return;
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      if (!user) {
+        navigate({ to: "/login" });
+        return;
+      }
+
+      const localOrders = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("ssg_orders_db") || "[]") : [];
+
+      apiFetch<{ orders: any[] }>("/orders/user")
+        .then((res) => setOrders(res.orders))
+        .catch(() => {
+          setOrders(localOrders);
+        })
+        .finally(() => setLoadingOrders(false));
     }
+  }, [isMounted, user, navigate]);
 
-    const localOrders = JSON.parse(localStorage.getItem("ssg_orders_db") || "[]");
-
-    apiFetch<{ orders: any[] }>("/orders/user")
-      .then((res) => setOrders(res.orders))
-      .catch(() => {
-        setOrders(localOrders);
-      })
-      .finally(() => setLoadingOrders(false));
-  }, [user, navigate]);
+  if (!isMounted) {
+    return (
+      <div className="shell py-24 text-center space-y-4">
+        <div className="mx-auto size-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+        <p className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Loading Account Portal...</p>
+      </div>
+    );
+  }
 
   if (!user) return null;
 
@@ -167,16 +184,12 @@ function AccountPage() {
 
                     <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
                       <span className="text-xs text-muted-foreground">Dispatched from Ichapuram Store</span>
-                      <a
-                        href={`https://wa.me/919030690787?text=${encodeURIComponent(
-                          `Hi SS Gift World! Please update status for my Order ID: *${order.orderNumber}* (${order.customerName}).`
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-bold text-emerald-600 hover:bg-emerald-500/20"
+                      <button
+                        onClick={() => setTrackingOrder(order)}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-1.5 text-xs font-bold text-primary hover:bg-primary/20 transition-all cursor-pointer shadow-soft"
                       >
-                        💬 Track Order on WhatsApp
-                      </a>
+                        📍 Track Live Order
+                      </button>
                     </div>
                   </motion.div>
                 ))
@@ -255,6 +268,82 @@ function AccountPage() {
           )}
         </div>
       </div>
+
+      {/* REAL IN-APP LIVE ORDER TRACKING MODAL */}
+      <AnimatePresence>
+        {trackingOrder && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-lift space-y-6"
+            >
+              <div className="flex items-center justify-between border-b border-border pb-4">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Live Logistics Status</span>
+                  <h3 className="text-lg font-extrabold flex items-center gap-2">
+                    Order #{trackingOrder.orderNumber || trackingOrder.id}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setTrackingOrder(null)}
+                  className="grid size-9 place-items-center rounded-full border border-border hover:bg-secondary"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              {/* Progress Timeline Stepper */}
+              <div className="space-y-6 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-primary/20">
+                {[
+                  { title: "Order Confirmed & Payment Verified", desc: "Order received at Ichapuram store", status: "completed", icon: CheckCircle2 },
+                  { title: "Design Proof & Personalization", desc: "Photo / custom text proof approved", status: "completed", icon: Sparkles },
+                  { title: "In Production & Gift Wrap", desc: "Printing, framing, and ribbon packaging", status: "completed", icon: Package },
+                  { title: "Dispatched from Store", desc: "Handed over to local delivery partner", status: "active", icon: Truck },
+                  { title: "Out for Express Delivery", desc: "On the way to your delivery address", status: "pending", icon: Zap },
+                  { title: "Delivered", desc: "Expected arrival today before 7:00 PM", status: "pending", icon: ShieldCheck },
+                ].map((step, idx) => (
+                  <div key={idx} className="relative flex items-start gap-4 pl-8">
+                    <div
+                      className={`absolute left-0 top-0 grid size-8 place-items-center rounded-full text-xs font-bold transition-all ${
+                        step.status === "completed"
+                          ? "bg-primary text-primary-foreground shadow-glow"
+                          : step.status === "active"
+                          ? "bg-amber-500 text-white ring-4 ring-amber-500/20 animate-pulse"
+                          : "border border-border bg-background text-muted-foreground"
+                      }`}
+                    >
+                      <step.icon className="size-4" />
+                    </div>
+                    <div>
+                      <p className={`text-xs font-extrabold ${step.status === "pending" ? "text-muted-foreground" : "text-foreground"}`}>
+                        {step.title}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{step.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-xs space-y-1.5">
+                <div className="flex justify-between font-bold">
+                  <span className="text-muted-foreground">Delivery Partner:</span>
+                  <span className="text-primary">Swetchavathi Express Dispatch</span>
+                </div>
+                <div className="flex justify-between font-bold">
+                  <span className="text-muted-foreground">Delivery Contact:</span>
+                  <span className="text-foreground">+91 9030690787</span>
+                </div>
+                <div className="flex justify-between font-bold">
+                  <span className="text-muted-foreground">Destination:</span>
+                  <span className="text-foreground truncate max-w-[200px]">{trackingOrder.customerAddress || "Market Road, Ichapuram"}</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -33,6 +33,7 @@ function Shop() {
   const [query, setQuery] = useState("");
   const [price, setPrice] = useState([5000]);
   const [minRating, setMinRating] = useState(0);
+  const [ageGroup, setAgeGroup] = useState<string>("all");
   const [sort, setSort] = useState("featured");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -41,6 +42,7 @@ function Shop() {
     let list = products.filter(
       (p) =>
         (!category || p.category === category) &&
+        (ageGroup === "all" || p.ageGroup === ageGroup) &&
         p.price <= price[0]! &&
         p.rating >= minRating &&
         p.name.toLowerCase().includes(query.toLowerCase()),
@@ -49,12 +51,39 @@ function Shop() {
     if (sort === "high") list = [...list].sort((a, b) => b.price - a.price);
     if (sort === "rating") list = [...list].sort((a, b) => b.rating - a.rating);
     return list;
-  }, [category, price, minRating, query, sort]);
+  }, [category, price, minRating, ageGroup, query, sort]);
 
   const setCategory = (slug?: string) => navigate({ search: { category: slug } });
 
   const filters = (
     <div className="space-y-8">
+      {/* Age Group Filter for Toys & Soft Toys */}
+      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-2.5">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-primary flex items-center gap-1.5">
+          👶 Kids Age Filter
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: "all", label: "✨ All Ages" },
+            { id: "baby", label: "🧸 Toddlers (0-3 Yrs)" },
+            { id: "kids", label: "🚗 Kids (3-8 Yrs)" },
+            { id: "teens", label: "🎮 Big Kids (8-14+ Yrs)" },
+          ].map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => setAgeGroup(a.id)}
+              className={cn(
+                "rounded-full px-3 py-1.5 text-xs font-bold transition-all cursor-pointer",
+                ageGroup === a.id ? "bg-primary text-primary-foreground shadow-glow" : "bg-card hover:bg-secondary border border-border"
+              )}
+            >
+              {a.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div>
         <h3 className="text-sm font-bold uppercase tracking-[0.14em]">Category</h3>
         <div className="mt-4 flex flex-wrap gap-2 lg:flex-col lg:items-start">
@@ -235,7 +264,9 @@ function Shop() {
                       />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs capitalize text-muted-foreground">{p.category}</p>
+                      <p className="text-xs capitalize text-muted-foreground">
+                        {typeof p.category === "object" ? (p.category as any)?.name || (p.category as any)?.slug?.replace("-", " ") : String(p.category || "").replace("-", " ")}
+                      </p>
                       <h3 className="mt-1 truncate text-lg font-bold group-hover:text-primary">{p.name}</h3>
                       <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
                       <p className="mt-3 text-lg font-extrabold">{inr(p.price)}</p>

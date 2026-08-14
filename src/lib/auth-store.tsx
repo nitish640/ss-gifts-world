@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       apiFetch<{ user: UserProfile }>("/auth/me")
         .then((res) => {
           setUser(res.user);
-          localStorage.setItem("ssg_user", JSON.stringify(res.user));
+          if (typeof window !== "undefined") localStorage.setItem("ssg_user", JSON.stringify(res.user));
         })
         .catch(() => {
           // Keep local cached user if offline
@@ -52,14 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthToken(newToken);
     setTokenState(newToken);
     setUser(newUser);
-    localStorage.setItem("ssg_user", JSON.stringify(newUser));
+    if (typeof window !== "undefined") localStorage.setItem("ssg_user", JSON.stringify(newUser));
   };
 
   const logout = () => {
     setAuthToken(null);
     setTokenState(null);
     setUser(null);
-    localStorage.removeItem("ssg_user");
+    if (typeof window !== "undefined") localStorage.removeItem("ssg_user");
   };
 
   return (

@@ -81,16 +81,24 @@ function AdminDashboardPage() {
     expiryDate: "2026-12-31",
   });
 
-  useEffect(() => {
-    if (!user || user.role !== "ADMIN") {
-      navigate({ to: "/admin/login" });
-      return;
-    }
+  const [isMounted, setIsMounted] = useState(false);
 
-    loadDashboardData();
-  }, [user, navigate]);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      if (!user || user.role !== "ADMIN") {
+        navigate({ to: "/admin/login" });
+        return;
+      }
+      loadDashboardData();
+    }
+  }, [isMounted, user, navigate]);
 
   const loadDashboardData = () => {
+    if (typeof window === "undefined") return;
     const localOrders = JSON.parse(localStorage.getItem("ssg_orders_db") || "[]");
     setOrdersList(localOrders);
 
@@ -131,13 +139,54 @@ function AdminDashboardPage() {
     reader.onloadend = () => {
       const dataUrl = reader.result as string;
       if (isEditing) {
-        setEditingProduct((prev: any) => ({ ...prev, image: dataUrl }));
+        setEditingProduct((prev: any) => {
+          const imgs = prev.images && prev.images.length > 0 ? prev.images : [dataUrl];
+          imgs[0] = dataUrl;
+          return { ...prev, image: dataUrl, images: [...imgs] };
+        });
       } else {
-        setNewProduct((prev) => ({ ...prev, image: dataUrl }));
+        setNewProduct((prev: any) => {
+          const imgs = prev.images && prev.images.length > 0 ? prev.images : [dataUrl];
+          imgs[0] = dataUrl;
+          return { ...prev, image: dataUrl, images: [...imgs] };
+        });
       }
       toast.success("Image file selected!", { description: file.name });
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleMultiImageUpload = (e: React.ChangeEvent<HTMLInputElement>, isEditing = false) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        if (isEditing) {
+          setEditingProduct((prev: any) => {
+            const currentImages = prev.images || (prev.image ? [prev.image] : []);
+            return {
+              ...prev,
+              images: [...currentImages, dataUrl],
+              image: currentImages[0] || dataUrl,
+            };
+          });
+        } else {
+          setNewProduct((prev: any) => {
+            const currentImages = prev.images || (prev.image ? [prev.image] : []);
+            return {
+              ...prev,
+              images: [...currentImages, dataUrl],
+              image: currentImages[0] || dataUrl,
+            };
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    toast.success("Additional product photos added to gallery!");
   };
 
   const handleCreateProduct = async (e: React.FormEvent) => {
@@ -272,6 +321,15 @@ function AdminDashboardPage() {
     toast.success("Coupon code deleted.");
   };
 
+  if (!isMounted) {
+    return (
+      <div className="shell py-24 text-center space-y-4">
+        <div className="mx-auto size-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+        <p className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Loading Admin Management Portal...</p>
+      </div>
+    );
+  }
+
   if (!user || user.role !== "ADMIN") return null;
 
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -283,17 +341,23 @@ function AdminDashboardPage() {
     }
   });
   const salesData = days.map((day) => ({ day, sales: salesMap[day] || 0 }));
+  const getCatName = (cat: any) => {
+    if (!cat) return "General";
+    if (typeof cat === "string") return cat.replace("-", " ");
+    if (typeof cat === "object") return cat.name || cat.slug?.replace("-", " ") || "General";
+    return String(cat);
+  };
 
   return (
-    <div className="shell py-8 md:py-12">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border pb-6">
+    <div className="shell py-10 md:py-16 space-y-8">
+      {/* Page Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-6">
         <div>
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">Admin Control Center</span>
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-extrabold text-primary">Admin Control Center</span>
             <span className="text-xs text-muted-foreground">SS Gift World Ichapuram</span>
           </div>
-          <h1 className="mt-2 text-2xl font-extrabold md:text-4xl">Store Management Portal</h1>
+          <h1 className="mt-2 text-3xl font-extrabold md:text-4xl">Store Management Portal</h1>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -314,8 +378,8 @@ function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Tabs Bar */}
-      <div className="mt-8 flex flex-wrap gap-2 rounded-2xl bg-card p-1.5 border border-border shadow-soft">
+      {/* Navigation Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border">
         {[
           { id: "orders", label: "Orders Fulfillment & Approval", icon: ShoppingCart },
           { id: "customers", label: "Registered Customers & Addresses", icon: Users },
@@ -363,7 +427,7 @@ function AdminDashboardPage() {
             </div>
             <div className="rounded-3xl border border-border bg-card p-6 shadow-soft">
               <span className="text-xs font-bold text-muted-foreground">Low Stock Warnings</span>
-              <p className="mt-2 text-3xl font-extrabold text-amber-600">{productsList.filter((p) => (p.stock || 10) <= 5).length}</p>
+              <p className="mt-2 text-3xl font-extrabold text-amber-600">{productsList.filter((p) => (p?.stock || 10) <= 5).length}</p>
               <span className="mt-1 inline-block text-[11px] font-semibold text-amber-600">Items need replenishment</span>
             </div>
           </div>
@@ -557,7 +621,7 @@ function AdminDashboardPage() {
                 <div>
                   <label className="text-[11px] font-bold text-muted-foreground uppercase">Category</label>
                   <select
-                    value={editingProduct.category?.slug || editingProduct.category || "mug-printing"}
+                    value={typeof editingProduct.category === "object" ? editingProduct.category.slug || "mug-printing" : editingProduct.category || "mug-printing"}
                     onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
                     className="mt-1 w-full rounded-2xl border border-border bg-background p-3 text-xs outline-none"
                   >
@@ -614,23 +678,64 @@ function AdminDashboardPage() {
                   />
                 </div>
 
-                {/* EDIT FILE UPLOAD PICKER */}
-                <div className="sm:col-span-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase">Update Image File (Upload from Device)</label>
-                  <div className="mt-2 flex flex-col sm:flex-row items-center gap-4 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-4">
-                    <img src={editingProduct.image || editingProduct.images?.[0]} alt="Preview" className="size-20 rounded-2xl object-cover border border-border bg-background shrink-0 shadow-soft" />
-                    <div className="flex-1 text-center sm:text-left">
-                      <label className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-glow cursor-pointer hover:scale-105 transition-transform">
-                        <Upload className="size-4" /> Change Image File
+                {/* EDIT FILE UPLOAD PICKER & MULTI-IMAGE GALLERY MANAGER */}
+                <div className="sm:col-span-2 space-y-4">
+                  <div>
+                    <label className="text-[11px] font-bold text-muted-foreground uppercase">Main Cover Image (Upload from Device)</label>
+                    <div className="mt-2 flex flex-col sm:flex-row items-center gap-4 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-4">
+                      <img src={editingProduct.image || editingProduct.images?.[0]} alt="Preview" className="size-20 rounded-2xl object-cover border border-border bg-background shrink-0 shadow-soft" />
+                      <div className="flex-1 text-center sm:text-left">
+                        <label className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-glow cursor-pointer hover:scale-105 transition-transform">
+                          <Upload className="size-4" /> Change Main Image
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageFileUpload(e, true)}
+                            className="hidden"
+                          />
+                        </label>
+                        <p className="mt-1 text-[11px] text-muted-foreground">Select main cover image for catalog</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* MULTI-IMAGE GALLERY MANAGER */}
+                  <div className="rounded-2xl border border-border bg-secondary/30 p-4 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-muted-foreground uppercase">Product Image Gallery (Multiple Thumbnail Angles)</label>
+                      <span className="text-xs font-extrabold text-primary">{editingProduct.images?.length || 1} Photos</span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                      {(editingProduct.images || [editingProduct.image]).map((imgUrl: string, idx: number) => (
+                        <div key={idx} className="relative group size-20 rounded-2xl overflow-hidden border border-border bg-background shadow-soft">
+                          <img src={imgUrl} alt={`Gallery ${idx + 1}`} className="size-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = (editingProduct.images || [editingProduct.image]).filter((_: any, i: number) => i !== idx);
+                              setEditingProduct({ ...editingProduct, images: updated, image: updated[0] || editingProduct.image });
+                            }}
+                            className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        </div>
+                      ))}
+
+                      <label className="flex flex-col items-center justify-center size-20 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors">
+                        <Plus className="size-5 text-primary" />
+                        <span className="text-[9px] font-bold text-primary mt-1">+ Add Photo</span>
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => handleImageFileUpload(e, true)}
+                          multiple
+                          onChange={(e) => handleMultiImageUpload(e, true)}
                           className="hidden"
                         />
                       </label>
-                      <p className="mt-1 text-[11px] text-muted-foreground">Select a new image file from your device</p>
                     </div>
+                    <p className="text-[11px] text-muted-foreground">Upload additional photos (angles, packaging, closeups) for customer product detail view!</p>
                   </div>
                 </div>
               </div>
@@ -664,7 +769,7 @@ function AdminDashboardPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {productsList
-                  .filter((p) => p.name.toLowerCase().includes(productSearch.toLowerCase()))
+                  .filter((p) => p && p.name && p.name.toLowerCase().includes((productSearch || "").toLowerCase()))
                   .map((p) => (
                     <tr key={p.id} className="hover:bg-secondary/20">
                       <td className="p-4 font-bold flex items-center gap-3">
@@ -676,13 +781,13 @@ function AdminDashboardPage() {
                           </div>
                         </Link>
                       </td>
-                      <td className="p-4 text-muted-foreground font-medium capitalize">{p.category?.name || p.category}</td>
+                      <td className="p-4 text-muted-foreground font-medium capitalize">{getCatName(p.category)}</td>
                       <td className="p-4 font-extrabold">
                         {inr(p.price)}
                         {p.oldPrice && <span className="ml-1 text-[11px] font-normal text-muted-foreground line-through">{inr(p.oldPrice)}</span>}
                       </td>
                       <td className="p-4">
-                        <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${p.stock <= 5 ? "bg-amber-500/10 text-amber-600" : "bg-emerald-500/10 text-emerald-600"}`}>
+                        <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${(p.stock || 10) <= 5 ? "bg-amber-500/10 text-amber-600" : "bg-emerald-500/10 text-emerald-600"}`}>
                           {p.stock || 10} in stock
                         </span>
                       </td>
@@ -1142,7 +1247,7 @@ function AdminDashboardPage() {
                       <img src={p.image || p.images?.[0]} alt={p.name} className="size-10 rounded-xl object-cover border border-border bg-secondary" />
                       <span>{p.name}</span>
                     </td>
-                    <td className="p-4 text-muted-foreground font-medium capitalize">{p.category?.name || p.category}</td>
+                    <td className="p-4 text-muted-foreground font-medium capitalize">{getCatName(p.category)}</td>
                     <td className="p-4 font-bold">{inr(p.price)}</td>
                     <td className="p-4">
                       {(p.stock || 10) <= 0 ? (

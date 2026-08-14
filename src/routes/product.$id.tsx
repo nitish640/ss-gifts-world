@@ -36,7 +36,9 @@ function ProductPage() {
   const navigate = useNavigate();
   const [qty, setQty] = useState(1);
   const [customText, setCustomText] = useState("");
-  const [selectedColor, setSelectedColor] = useState("Classic White");
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedColor, setSelectedColor] = useState(product?.colors?.[0]?.name || "Classic");
+  const [selectedSize, setSelectedSize] = useState(product?.sizes?.[0] || "");
   const [pin, setPin] = useState("");
   const [pinResult, setPinResult] = useState<string | null>(null);
   const wished = Array.isArray(wishlist) && product ? wishlist.includes(product.id) : false;
@@ -75,11 +77,11 @@ function ProductPage() {
             className="group relative overflow-hidden rounded-[2rem] border border-border bg-card shadow-soft"
           >
             <img
-              src={product.image}
+              src={product.images?.[selectedImageIndex] || product.image}
               alt={product.name}
               width={800}
               height={800}
-              className="aspect-square w-full object-cover transition-transform duration-[900ms] group-hover:scale-125"
+              className="aspect-square w-full object-cover transition-transform duration-[900ms] group-hover:scale-110"
             />
             {customText && (
               <div className="absolute inset-x-4 bottom-8 flex justify-center pointer-events-none">
@@ -89,33 +91,72 @@ function ProductPage() {
               </div>
             )}
           </motion.div>
-          {/* Interactive Color Variant Selector for Mugs */}
-          {product.category === "mug-printing" && (
+
+          {/* Multi-Image Thumbnail Gallery */}
+          {product.images && product.images.length > 1 && (
+            <div className="mt-4 flex items-center gap-3 overflow-x-auto pb-1">
+              {product.images.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedImageIndex(idx)}
+                  className={cn(
+                    "relative size-20 shrink-0 overflow-hidden rounded-2xl border-2 transition-all cursor-pointer",
+                    selectedImageIndex === idx ? "border-primary shadow-md scale-105" : "border-border opacity-70 hover:opacity-100"
+                  )}
+                >
+                  <img src={img} alt={`View ${idx + 1}`} className="size-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Dynamic Color Selector */}
+          {product.colors && product.colors.length > 0 && (
             <div className="mt-4 rounded-2xl border border-border bg-card p-4 space-y-2.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Gift / Mug Color</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Color / Finish</label>
                 <span className="text-xs font-extrabold text-primary">{selectedColor}</span>
               </div>
               <div className="grid grid-cols-4 gap-2">
-                {[
-                  { name: "Classic White", colorHex: "#ffffff", border: "border-border" },
-                  { name: "Magic Red", colorHex: "#ef4444", border: "border-red-500" },
-                  { name: "Matte Black", colorHex: "#18181b", border: "border-zinc-800" },
-                  { name: "Royal Blue", colorHex: "#2563eb", border: "border-blue-600" },
-                ].map((c) => (
+                {product.colors.map((c) => (
                   <button
                     key={c.name}
                     type="button"
                     onClick={() => setSelectedColor(c.name)}
                     className={`flex flex-col items-center justify-center rounded-xl border p-2 text-center transition-all ${
-                      selectedColor === c.name ? "border-primary bg-primary/10 shadow-sm" : "border-border hover:bg-secondary"
+                      selectedColor === c.name ? "border-primary bg-primary/10 shadow-sm font-bold" : "border-border hover:bg-secondary"
                     }`}
                   >
                     <span
                       className="size-5 rounded-full border border-border shadow-inner mb-1"
-                      style={{ backgroundColor: c.colorHex }}
+                      style={{ backgroundColor: c.hex }}
                     />
-                    <span className="text-[10px] font-bold truncate w-full">{c.name}</span>
+                    <span className="text-[10px] truncate w-full">{c.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Dynamic Size / Dimensions Selector */}
+          {product.sizes && product.sizes.length > 0 && (
+            <div className="mt-4 rounded-2xl border border-border bg-card p-4 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Size / Dimensions</label>
+                <span className="text-xs font-extrabold text-primary">{selectedSize}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {product.sizes.map((sz) => (
+                  <button
+                    key={sz}
+                    type="button"
+                    onClick={() => setSelectedSize(sz)}
+                    className={`rounded-xl border px-3.5 py-2 text-xs font-bold transition-all ${
+                      selectedSize === sz ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-border hover:bg-secondary text-muted-foreground"
+                    }`}
+                  >
+                    {sz}
                   </button>
                 ))}
               </div>
