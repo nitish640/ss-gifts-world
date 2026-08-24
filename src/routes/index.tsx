@@ -23,17 +23,33 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "SS Gift World — Premium Curated Gifts, Delivered Beautifully" },
+      { title: "SSG Gift World — Sri Swetchavathi Gift World, Ichapuram" },
       {
         name: "description",
         content:
-          "Shop luxury gift hampers, fresh flowers, chocolates and personalised gifts. Signature packaging, 24-hour dispatch and free handwritten notes across India.",
+          "Custom mug printing, photo frames, birthday gifts, soft toys, balloons, toys & event items in Ichapuram.",
       },
-      { property: "og:title", content: "SS Gift World — Premium Curated Gifts" },
+      { property: "og:title", content: "SSG Gift World — Sri Swetchavathi Gift World, Ichapuram" },
       {
         property: "og:description",
-        content: "Luxury curated gifting for birthdays, weddings, anniversaries and corporate occasions.",
+        content:
+          "Custom mug printing, photo frames, birthday gifts, soft toys, balloons, toys & event items in Ichapuram.",
       },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://gifted-elegance-main.vercel.app" },
+      { property: "og:image", content: "https://gifted-elegance-main.vercel.app/og-image.jpg" },
+      { property: "og:image:secure_url", content: "https://gifted-elegance-main.vercel.app/og-image.jpg" },
+      { property: "og:image:type", content: "image/jpeg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "SSG Gift World — Sri Swetchavathi Gift World, Ichapuram" },
+      {
+        name: "twitter:description",
+        content:
+          "Custom mug printing, photo frames, birthday gifts, soft toys, balloons, toys & event items in Ichapuram.",
+      },
+      { name: "twitter:image", content: "https://gifted-elegance-main.vercel.app/og-image.jpg" },
     ],
   }),
   component: Home,

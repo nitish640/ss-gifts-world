@@ -15,13 +15,16 @@ export const Route = createFileRoute("/shop")({
   }),
   head: () => ({
     meta: [
-      { title: "Shop All Gifts — SS Gift World" },
+      { title: "Shop All Gifts — SSG Gift World" },
       {
         name: "description",
-        content: "Browse curated gift hampers, flowers, chocolates, decor and personalised gifts with fast delivery.",
+        content: "Browse custom mug printing, photo frames, birthday gifts, soft toys, balloons & event items in Ichapuram.",
       },
-      { property: "og:title", content: "Shop All Gifts — SS Gift World" },
-      { property: "og:description", content: "Filter by occasion, price and rating to find the perfect gift." },
+      { property: "og:title", content: "Shop All Gifts — SSG Gift World" },
+      { property: "og:description", content: "Browse custom mug printing, photo frames, birthday gifts, soft toys, balloons & event items in Ichapuram." },
+      { property: "og:image", content: "https://gifted-elegance-main.vercel.app/og-image.jpg" },
+      { property: "og:image:secure_url", content: "https://gifted-elegance-main.vercel.app/og-image.jpg" },
+      { name: "twitter:image", content: "https://gifted-elegance-main.vercel.app/og-image.jpg" },
     ],
   }),
   component: Shop,
