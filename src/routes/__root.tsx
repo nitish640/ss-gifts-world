@@ -98,11 +98,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Mug printing, photo frames, birthday gifts, soft toys, balloons, toys and event items in Ichapuram, Srikakulam.",
+          "Custom mug printing, photo frames, birthday gifts, soft toys, balloons, toys & event items in Ichapuram.",
       },
-
+      { property: "og:title", content: "SSG Gift World — Sri Swetchavathi Gift World, Ichapuram" },
+      {
+        property: "og:description",
+        content:
+          "Custom mug printing, photo frames, birthday gifts, soft toys, balloons, toys & event items in Ichapuram.",
+      },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://gifted-elegance-main.vercel.app" },
+      { property: "og:image", content: "https://gifted-elegance-main.vercel.app/og-image.jpg" },
+      { property: "og:image:secure_url", content: "https://gifted-elegance-main.vercel.app/og-image.jpg" },
+      { property: "og:image:type", content: "image/jpeg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "SSG Gift World — Sri Swetchavathi Gift World, Ichapuram" },
+      {
+        name: "twitter:description",
+        content:
+          "Custom mug printing, photo frames, birthday gifts, soft toys, balloons, toys & event items in Ichapuram.",
+      },
+      { name: "twitter:image", content: "https://gifted-elegance-main.vercel.app/og-image.jpg" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -113,6 +131,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootShell,

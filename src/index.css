@@ -1,0 +1,15 @@
+@layer base {
+  #lovable-badge,
+  .lovable-badge,
+  [id*="lovable-badge"],
+  [class*="lovable-badge"],
+  [data-lovable-badge],
+  #lovable-editor-badge,
+  .lovable-editor-badge,
+  a[href*="lovable.dev"] {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}
